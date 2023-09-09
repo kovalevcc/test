@@ -1,9 +1,9 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, json
 import pandas as pd
 import inference
 import tempfile
 import os
-
+import numpy as np
 app = Flask(__name__)
 
 @app.route('/upload', methods=['POST'])
@@ -34,25 +34,35 @@ def upload_file():
     except Exception as e:
         return jsonify({'error': str(e)})
 
+@app.route('/test', methods=['POST'])
+def test():
+    response = jsonify({'test': 'lorem ipsum'})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
 @app.route('/predict_text', methods=['POST'])
 def predict_text():
     try:
-        content_type = request.headers.get('Content-Type')
-        if content_type == 'application/json':
+        #content_type = request.headers.get('Content-Type')
+        #if content_type == 'application/json':
             data = request.get_json(force=True)
             text = data.get('text')
 
             if text is None:
-                return jsonify({'error': 'Text data is missing in the request.'})
+                response = jsonify({'error': 'Text data is missing in the request.'})
+                response.headers.add('Access-Control-Allow-Origin', '*')
+                return response
 
             prediction1, prediction2 = inference.text_prediction(text)
-
-            return jsonify({'prediction1': prediction1, 'prediction2': prediction2})
-        else:
-            return 'Content-Type not supported!'
-
+            listed_pred1 = prediction1.tolist()
+            listed_pred2 = prediction2.tolist()
+            response = jsonify({'prediction1': listed_pred1, 'prediction2': listed_pred2})
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response
+        # else:
+        #     return 'Content-Type not supported!'
     except Exception as e:
         return jsonify({'error': str(e)})
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)
